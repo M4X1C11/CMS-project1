@@ -28,13 +28,26 @@ class PostController extends Controller
     }
 
     // --- Prikaz jednog posta ---
-    public function show(Post $post)
-    {
-        $post->load(['user', 'category', 'tags']);
-        $comments = $post->comments()->with('user')->latest()->paginate(5);
-
-        return view('posts.show', compact('post', 'comments'));
+public function show(Post $post)
+{
+    // Ako je URL slug različit od aktuelnog sluga u bazi → SEO redirect
+    if (request()->route('post') !== $post->slug) {
+        return redirect()
+            ->route('posts.show', $post->slug)
+            ->setStatusCode(301);
     }
+
+    // Eager load relacija
+    $post->load(['user', 'category', 'tags']);
+
+    // Paginacija komentara
+    $comments = $post->comments()
+        ->with('user')
+        ->latest()
+        ->paginate(5);
+
+    return view('posts.show', compact('post', 'comments'));
+}
 
     // --- Forma za kreiranje posta ---
     public function create()
